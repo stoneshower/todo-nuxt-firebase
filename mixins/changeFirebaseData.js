@@ -26,19 +26,4 @@ export const deleteData = (list, item) => {
       }
     })
   })
-
-  // let currentItem
-  // toDoRef.get().then((querySnapShot) => {
-  //   return querySnapShot.docs.forEach((doc) => {
-  //     currentItem = componentData.filter((elem) => {
-  //       return elem.id === item.id
-  //     })[0]
-
-  //     if (doc.id === currentItem.id) {
-  //       doc.ref.delete()
-  //         .then(() => console.log('document is successfully deleted'))
-  //         .catch(() => console.log('something is wrong'))
-  //     }
-  //   })
-  // })
 }

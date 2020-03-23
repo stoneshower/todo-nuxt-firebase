@@ -45,13 +45,18 @@ export default {
     '@nuxtjs/axios',
     // '@nuxtjs/pwa',
     // Doc: https://github.com/nuxt-community/dotenv-module
-    '@nuxtjs/dotenv'
+    '@nuxtjs/dotenv',
+    'nuxt-fontawesome',
   ],
   /*
   ** Axios module configuration
   ** See https://axios.nuxtjs.org/options
   */
   axios: {
+  },
+
+  fontawesome: {
+    component: 'fa'
   },
   /*
   ** Build configuration

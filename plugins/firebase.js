@@ -1,4 +1,4 @@
-import * as firebase from 'firebase'
+import firebase from 'firebase'
 
 const config = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -11,3 +11,5 @@ const config = {
 }
 
 export const db = !firebase.apps.length ? firebase.initializeApp(config).firestore() : firebase.app().firestore()
+
+export default firebase

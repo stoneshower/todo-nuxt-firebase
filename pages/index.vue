@@ -3,7 +3,7 @@
     <div class="container-login" :class="isAuthenticated ? 'isAuthenticated' : ''">
       <!-- ログイン中に表示される画面 -->
       <div v-if="isAuthenticated">
-        <AddPost :userName="displayName"/>
+        <AddPost :userName="displayName" :userid="uid" />
         <button @click="logout" class="formBtn">ログアウト</button><br>
       </div>
       <!-- ログインしていない時に表示される画面 -->
@@ -34,7 +34,7 @@
           <button v-if="entryMode === 'create'" @click="signup" class="formBtn">登録</button>
         </div>
 
-        <p class="errorMsg"><input type="checkbox" @change="switchAddUser($event)"> アカウントを作成する</p>
+        <p class="errorMsg"><label><input type="checkbox" @change="switchAddUser($event)"> アカウントを作成する</label></p>
         <p class="errorMsg">{{ error.message }}</p>
       </div>
     </div>
@@ -70,6 +70,8 @@ export default {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         const { email, uid } = user
+        const targetUser = firebase.auth().currentUser
+        this.uid = targetUser.uid
         this.setUser({ email, uid })
       } else {
         console.log('error', user)
@@ -81,7 +83,8 @@ export default {
     login () {
       firebase.auth().signInWithEmailAndPassword(this.email, this.password)
         .then((user) => {
-          this.uid = user.uid
+          const targetUser = firebase.auth().currentUser
+          this.uid = targetUser.uid
         })
         .catch((err) => {
           this.error.code = err.code
@@ -94,6 +97,11 @@ export default {
         .then(() => {
           this.setUser(null)
           this.uid = ''
+          this.entryMode = 'login'
+          this.error.message = ''
+          this.displayName = ''
+          this.email = ''
+          this.password = ''
         })
         .catch((err) => {
           this.error.code = err.code
@@ -105,14 +113,12 @@ export default {
       firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
         .then((user) => {
           const targetUser = firebase.auth().currentUser
+          this.uid = targetUser.uid
           targetUser.updateProfile({
             displayName: this.displayName
           })
             .then(() => {
-              console.log(user)
-              console.log(user.uid)
-              this.uid = user.uid
-              console.log('Add username')
+              console.log('Registered!')
             })
             .catch(err => console.log('cannot add user name', err))
         })
@@ -133,7 +139,6 @@ export default {
 .container {
   margin: 0 auto;
   padding: 18px;
-  // min-height: 100vh;
   display: flex;
 }
 

@@ -3,35 +3,54 @@
     <h1>{{ userName }} タスク💪</h1>
     <div v-if="getTodos.length">
       <ul v-for="(item, index) in getTodos" :key="item.title + index" class="wrapper">
-        <li>
-          <label>
-            <input type="checkbox" :checked="item.isEditting" @change="updateEditState($event, getTodos, item)" />
-          </label>
+        <li :class="item.isEditting ? 'is-editting' : ''">
+          <div class="item-checkbox">
+            <input :id="item.title + index" type="checkbox" :checked="item.isEditting" @change="updateEditState($event, getTodos, item)">
+          </div>
           <div v-if="item.isEditting" class="editItem">
             <div class="title-edit">
-              <input :value="item.title" @change="editItem($event, getTodos, item)" />
+              <input :value="item.title" @change="editItem($event, getTodos, item)">
             </div>
-            <button v-if="!item.done" @click.prevent="updateItem(item)" class="update-button">更新</button>
-            <button @click.prevent="deleteItem(item)" class="update-button">削除</button>
-            <button v-if="!item.done" @click.prevent="doneItem(item)" class="update-button">完了</button>
+            <div class="edit-button-wrapper">
+              <button v-if="!item.done" class="update-button" @click.prevent="updateItem(item)">
+                更新
+              </button>
+              <button class="update-button" @click.prevent="deleteItem(item)">
+                削除
+              </button>
+              <button v-if="!item.done" class="update-button" @click.prevent="doneItem(item)">
+                完了
+              </button>
+            </div>
           </div>
           <div v-else>
-            <div class="title" :class="item.done ? 'done' : ''">{{ item.title }}</div>
+            <label :for="item.title + index">
+              <div :id="item.title + index" class="title" :class="item.done ? 'done' : ''">{{ item.title }}</div>
+            </label>
           </div>
-
-          <!-- <div class="id">{{ item.id }}</div> -->
         </li>
       </ul>
     </div>
     <div v-else>
-      <Loading />
+      <div v-if="showLoading">
+        <Loading />
+      </div>
+      <div v-else>
+        <p>ToDoが設定されていません😱</p>
+      </div>
     </div>
 
     <form class="add-task">
       <div v-if="isAddMode">
-        <input v-model="title" placeholder="例: PRのレビュー" class="add-task-input"/>
-        <button :disabled="!hasValue" @click.prevent="addTodo(getTodos)" class="add-task-button">タスクを追加</button>
-        <button @click.prevent="cancelAddTodo" class="cancel-task-button">キャンセル</button>
+        <input v-model="title" placeholder="例: PRのレビュー" class="add-task-input">
+        <div class="edit-button-wrapper">
+          <button class="add-task-button" :disabled="!hasValue" @click.prevent="addTodo(getTodos)">
+            タスクを追加
+          </button>
+          <button class="cancel-task-button" @click.prevent="cancelAddTodo">
+            キャンセル
+          </button>
+        </div>
       </div>
       <button v-else class="btn-no-border" @click.prevent="makeEditMode">
         <span class="add-task-icon"><fa :icon="faPlusCircle" /></span> タスクを追加
@@ -59,6 +78,11 @@ export default {
       type: [String, null],
       required: true,
       default: 'xxx',
+    },
+    userid: {
+      type: [String, null],
+      required: true,
+      default: '',
     }
   },
 
@@ -67,12 +91,9 @@ export default {
       isAddMode: false,
       title: '',
       done: false,
-      list: []
+      list: [],
+      showLoading: true,
     }
-  },
-
-  created () {
-    this.$store.dispatch('init')
   },
 
   computed: {
@@ -87,6 +108,11 @@ export default {
     }
   },
 
+  created () {
+    this.$store.dispatch('init')
+    setTimeout(() => { this.showLoading = false }, 1000)
+  },
+
   methods: {
     addTodo (list) {
       const toDoRef = db.collection('todo')
@@ -96,15 +122,23 @@ export default {
 
       checkDuplicatedValue.then(
         (hasDuplicatedValue) => {
+          console.log('hasDuplicatedValue', hasDuplicatedValue)
           if (hasDuplicatedValue) {
             return
+          }
+          if (!this.$props.userid) {
+            alert('ログインしていないかも？？？')
           }
           const newItem = {
             title: this.title,
             done: false,
             isEditting: false,
+            userid: this.$props.userid
             // timestamp: db.FieldValue.serverTimestamp()
           }
+
+          console.log('newItem', newItem)
+
           toDoRef.add(newItem)
           // update local list state
           this.list = list
@@ -148,11 +182,17 @@ export default {
           id === item.id
             ? {
               id: item.id,
-              title: value
+              title: value,
+              done: false,
+              isEditting: false,
+              userid: this.$props.userid
             }
             : {
               id: item.id,
-              title: item.title
+              title: item.title,
+              done: false,
+              isEditting: false,
+              userid: this.$props.userid
             }
         ))
       }
@@ -186,10 +226,11 @@ export default {
 
   li {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    label {
-      padding-right: 8px;
+    .item-checkbox {
+      margin-top: 4px;
+      width: 20px;
     }
     input {
       display: block
@@ -198,8 +239,9 @@ export default {
 }
 .editItem {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
 
   button {
     color: #555;
@@ -234,6 +276,8 @@ export default {
   margin-top: 14px;
   text-align: left;
   margin-bottom: 6px;
+  border-top: 1px solid #ccc;
+  padding-top: 24px;
 }
 .add-task-icon {
   color: #dd4b39;
@@ -274,6 +318,7 @@ export default {
   font-weight: bold;
 }
 .add-task-input {
+  width: 100%;
   box-shadow: none;
   border: 1px solid #ddd;
   border-radius: 3px;
@@ -284,6 +329,7 @@ export default {
   font-family: 'Quicksand', 'Source Sans Pro', sans-serif;
 }
 .title-edit {
+  flex: 1 0 100%;
   input {
     box-shadow: none;
     border: 1px solid #ddd;
@@ -293,6 +339,7 @@ export default {
     line-height: 17px;
     color: #202020;
     font-family: 'Quicksand', 'Source Sans Pro', sans-serif;
+    width: 100%;
   }
 }
 .update-button {
@@ -312,5 +359,24 @@ export default {
   color: #fff !important;
   cursor: pointer;
   margin: 0 6px;
+}
+.edit-button-wrapper {
+  margin-left: auto;
+  margin-top: 8px;
+  justify-content: flex-end;
+  display: flex;
+  .update-button:last-child {
+    margin-right: 0;
+  }
+}
+.is-editting {
+  .editItem {
+    width: 100%;
+    padding-left: 4px;
+    align-items: flex-start;
+  }
+  .item-checkbox {
+    margin-top: 10px !important;
+  }
 }
 </style>
